@@ -8,3 +8,5 @@ E-commerce Product Recommendation Chatbot
 ## 3. Various Platform support for Chatbot(Facebook, Telegram, Web, Google Assistant)
 
 ## 4. Alexa skill for the same
+
+### By: Himanshu kriplani, Jhanvi Patel, Pratik Patel, Abhi Patel
