@@ -7,27 +7,8 @@ import random
 
 from sklearn.preprocessing import MinMaxScaler
 
-import implicit # The Cython library
-
-# Load the data like we did before
-#raw_data = pd.read_table('data/usersha1-artmbid-artname-plays.tsv')
-#raw_data = raw_data.drop(raw_data.columns[1], axis=1)
-#raw_data.columns = ['user', 'artist', 'plays']
-
+import implicit 
 from datetime import datetime, timedelta
-
-
-
-# Drop NaN columns
-data = raw_data.dropna()
-data = data.copy()
-
-## Create a numeric user_id and artist_id column
-#data['user'] = data['user'].astype("category")
-#data['artist'] = data['artist'].astype("category")
-#data['user_id'] = data['user'].cat.codes
-#data['artist_id'] = data['artist'].cat.codes
-
 
 
 def create_data(datapath,start_date,end_date):
@@ -38,7 +19,7 @@ def create_data(datapath,start_date,end_date):
     df=df[['visitorid','itemid','event']]
     return df
 
-datapath= 'events.csv'
+datapath= '../input/events.csv'
 data=create_data(datapath,'2015-5-3','2015-5-18')
 data['event']=data['event'].astype('category')
 data['event']=data['event'].cat.codes
@@ -83,121 +64,70 @@ top_idx = np.argpartition(scores, -n_similar)[-n_similar:]
 similar = sorted(zip(top_idx, scores[top_idx] / item_norms[item_id]), key=lambda x: -x[1])
 
 # Print the names of our most similar artists
+'''
+
 for item in similar:
     idx, score = item
     print(idx,score)
 
-similar = model.similar_items(item_id, n_similar)   
+'''
+
 
 #------------------------------
 # CREATE USER RECOMMENDATIONS
 #------------------------------
 
-def recommend(user_id, sparse_user_item, user_vecs, item_vecs, num_items=10):
-    """The same recommendation function we used before"""
 
-    user_interactions = sparse_user_item[user_id,:].toarray()
-
-    user_interactions = user_interactions.reshape(-1) + 1
-    user_interactions[user_interactions > 1] = 0
-
-    rec_vector = user_vecs[user_id,:].dot(item_vecs.T).toarray()
-    
-    min_max = MinMaxScaler()
-    rec_vector_scaled = min_max.fit_transform(rec_vector.reshape(-1,1))[:,0]
-    print(user_interactions.shape , rec_vector_scaled.shape)
-    recommend_vector = user_interactions * rec_vector_scaled.T
-
-    item_idx = np.argsort(recommend_vector)[::-1][:num_items]
-
-    artists = []
-    scores = []
-
-    for idx in item_idx:
-        artists.append(idx)
-        scores.append(recommend_vector[idx])
-
-    recommendations = pd.DataFrame({'artist': artists, 'score': scores})
-
-    return recommendations
-
-def recommend_2(user_id, data_sparse, user_vecs, item_vecs, num_items=10):
-    """Recommend items for a given user given a trained model
-    
-    Args:
-        user_id (int): The id of the user we want to create recommendations for.
-        
-        data_sparse (csr_matrix): Our original training data.
-        
-        user_vecs (csr_matrix): The trained user x features vectors
-        
-        item_vecs (csr_matrix): The trained item x features vectors
-        
-        item_lookup (pandas.DataFrame): Used to map artist ids to artist names
-        
-        num_items (int): How many recommendations we want to return:
-        
-    Returns:
-        recommendations (pandas.DataFrame): DataFrame with num_items artist names and scores
-    
-    """
-  
-    # Get all interactions by the user
-    user_interactions = data_sparse[user_id,:].toarray()
-
-    # We don't want to recommend items the user has consumed. So let's
-    # set them all to 0 and the unknowns to 1.
-    user_interactions = user_interactions.reshape(-1) + 1 #Reshape to turn into 1D array
-    user_interactions[user_interactions > 1] = 0
-
-    # This is where we calculate the recommendation by taking the 
-    # dot-product of the user vectors with the item vectors.
-    rec_vector = user_vecs[user_id,:].dot(item_vecs.T).toarray()
-
-    # Let's scale our scores between 0 and 1 to make it all easier to interpret.
-    min_max = MinMaxScaler()
-    rec_vector_scaled = min_max.fit_transform(rec_vector.reshape(-1,1))[:,0]
-    recommend_vector = user_interactions*rec_vector_scaled
-   
-    # Get all the artist indices in order of recommendations (descending) and
-    # select only the top "num_items" items. 
-    item_idx = np.argsort(recommend_vector)[::-1][:num_items]
-
-    artists = []
-    scores = []
-
-    # Loop through our recommended artist indicies and look up the actial artist name
-    for idx in item_idx:
-        print(idx)
-        print(recommend_vector[idx])
-        
-        #artists.append(item_lookup.artist.loc[item_lookup.artist_id == str(idx)].iloc[0])
-        scores.append(recommend_vector[idx])
-
-    # Create a new dataframe with recommended artist names and scores
-    recommendations = pd.DataFrame({'artist': artists, 'score': scores})
-    
-    return recommendations
 # Get the trained user and item vectors. We convert them to 
 # csr matrices to work with our previous recommend function.
 user_vecs = sparse.csr_matrix(model.user_factors)
 item_vecs = sparse.csr_matrix(model.item_factors)
 
 # Create recommendations for user with id 2025
+
 user_id = 148114#257597
 #number of users:
+
+
+'''
 list_scores_id=[]
 for i in data['visitorid'].unique().tolist():
     print(i)
     list_scores_id.append([i,model.recommend(user_id, sparse_user_item,N=1)])
 list_scores_id=[I[1] for I in list_scores_id]
 list_scores_id.sort(key=lambda x: x[1],reverse=True)
-    
-recommended = model.recommend(user_id, sparse_user_item,N=1221)
-recommended.sort(key=lambda x: x[1],reverse=True)
+'''    
 
-similar_users=model.similar_users(user_id, N=466865)
+def recommend(user_id,n=5):
+    recommended = model.recommend(user_id, sparse_user_item,N=n)
+    s='How about you try these products: '
+    x=sorted(recommended,key=lambda x: x[1],reverse=True)
+    recommended=[i[0] for i in recommended]
+    return recommended
+    for i in recommended:
+        s+=str(i[0])+','
+    return s[:-1]
 
-recommendations = recommend(user_id, sparse_user_item, user_vecs, item_vecs)
 
-print( recommendations)
+def find_similar_user(user_id,n=5):
+    s=model.similar_users(user_id, N=n)
+    x=''
+    s=[i[0] for i in s]
+    return s
+    for i in s:
+        x+=str(i)+','
+    return 'These are some of the similar users: '+ x[:-1]
+
+def find_similar_items(item_id,n=5):
+    similar = model.similar_items(item_id, n)
+    x=''
+    similar=[i[0] for i in similar]
+    return similar
+    for i in similar:
+        x+=str(i)+','
+    return 'These are some of the similar users: '+ x[:-1]
+
+
+
+
+
