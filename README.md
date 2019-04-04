@@ -3,7 +3,7 @@ E-commerce Product Recommendation Chatbot
 
 ## 1. Alternating Least Square Method for FM in Recommendation system.
 
-## 2. LightFm implementaion with an accuracy of 86%.
+## 2. LightFm implementaion with an accuracy of 81% on test and 99.3% on Train datasets.
 
 ## 3. Various Platform support for Chatbot(Facebook, Telegram, Web, Google Assistant)
 
